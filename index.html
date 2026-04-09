@@ -214,6 +214,36 @@ tr:hover td{background:var(--gray-50)}
 .w-full{width:100%}
 .admin-only{/* shown only for admin */}
 .staff-only{/* shown only for staff */}
+
+/* ===== USER MANAGEMENT ===== */
+.profile-card{background:var(--surface);border-radius:var(--radius-xl);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.profile-banner{height:80px;background:linear-gradient(135deg,var(--green-600),var(--green-400));position:relative}
+.profile-avatar-wrap{position:absolute;bottom:-28px;left:1.5rem}
+.profile-avatar-lg{width:60px;height:60px;border-radius:50%;background:var(--amber-400);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;font-family:'DM Serif Display',serif}
+.profile-info{padding:2.5rem 1.5rem 1.5rem}
+.profile-name{font-size:20px;font-family:'DM Serif Display',serif;margin-bottom:2px}
+.profile-meta{font-size:13px;color:var(--text-muted)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1.25rem}
+.info-item{background:var(--gray-50);border-radius:var(--radius);padding:12px 14px;border:1px solid var(--border)}
+.info-item .ii-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.info-item .ii-val{font-size:14px;color:var(--text-primary);font-weight:500}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.tab-btn{padding:8px 16px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--green-600);border-bottom-color:var(--green-500);font-weight:500}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;display:flex;align-items:center;gap:14px;transition:box-shadow .15s}
+.user-card:hover{box-shadow:var(--shadow)}
+.uc-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;flex-shrink:0;font-family:'DM Serif Display',serif}
+.uc-info{flex:1;min-width:0}
+.uc-name{font-size:14px;font-weight:500;color:var(--text-primary)}
+.uc-meta{font-size:12px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc-actions{display:flex;gap:6px;flex-shrink:0}
+.input-icon-wrap{position:relative}
+.input-icon-wrap .input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+.input-icon-wrap input{padding-left:36px}
+.pass-strength{height:4px;border-radius:4px;margin-top:6px;transition:all .3s;background:var(--gray-200)}
+.pass-strength-bar{height:100%;border-radius:4px;transition:all .3s}
 </style>
 </head>
 <body>
@@ -291,6 +321,9 @@ tr:hover td{background:var(--gray-50)}
         <button class="nav-item" onclick="navTo('report')">
           <div class="icon">📑</div><span>Laporan</span>
         </button>
+        <button class="nav-item" onclick="navTo('users')">
+          <div class="icon">🔐</div><span>Manajemen User</span>
+        </button>
       </div>
       <div class="sidebar-section staff-only" id="nav-staff-section" style="display:none">
         <div class="sidebar-label">Booth Saya</div>
@@ -299,6 +332,12 @@ tr:hover td{background:var(--gray-50)}
         </button>
         <button class="nav-item" onclick="navTo('my-sales')">
           <div class="icon">📋</div><span>Penjualan Saya</span>
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Akun</div>
+        <button class="nav-item" onclick="navTo('profile')">
+          <div class="icon">👤</div><span>Profil Saya</span>
         </button>
       </div>
     </nav>
@@ -409,12 +448,12 @@ tr:hover td{background:var(--gray-50)}
       <div class="page-section" id="sec-staff">
         <div class="page-header flex-between">
           <div><h2>Manajemen Karyawan</h2><p>Kelola akun karyawan setiap booth</p></div>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-staff')">+ Tambah Karyawan</button>
+          <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">+ Tambah Karyawan</button>
         </div>
         <div class="card">
           <div class="table-wrap">
             <table>
-              <thead><tr><th>#</th><th>Nama</th><th>Username</th><th>Booth</th><th>Peran</th><th>Status</th><th>Aksi</th></tr></thead>
+              <thead><tr><th>#</th><th>Nama &amp; No. HP</th><th>Username</th><th>Booth</th><th>Peran</th><th>Status</th><th>Aksi</th></tr></thead>
               <tbody id="staff-table-body"></tbody>
             </table>
           </div>
@@ -517,6 +556,113 @@ tr:hover td{background:var(--gray-50)}
         </div>
       </div>
 
+      <!-- USER MANAGEMENT (ADMIN) -->
+      <div class="page-section" id="sec-users">
+        <div class="page-header flex-between">
+          <div><h2>Manajemen User</h2><p>Kelola akun, data pribadi &amp; password pengguna</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddUserModal()">+ Tambah User</button>
+        </div>
+        <div class="tab-bar" id="user-tab-bar">
+          <button class="tab-btn active" onclick="switchUserTab('all')">Semua User</button>
+          <button class="tab-btn" onclick="switchUserTab('admin')">Admin</button>
+          <button class="tab-btn" onclick="switchUserTab('staff')">Karyawan</button>
+        </div>
+        <div id="user-cards-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px"></div>
+      </div>
+
+      <!-- PROFILE PAGE (ALL USERS) -->
+      <div class="page-section" id="sec-profile">
+        <div class="page-header">
+          <h2>Profil Saya</h2>
+          <p>Lihat dan edit informasi akun kamu</p>
+        </div>
+        <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start" id="profile-layout">
+          <div class="profile-card">
+            <div class="profile-banner"></div>
+            <div class="profile-info">
+              <div class="profile-avatar-wrap">
+                <div class="profile-avatar-lg" id="prof-avatar-lg">A</div>
+              </div>
+              <div class="profile-name" id="prof-name-display">-</div>
+              <div class="profile-meta">
+                <span id="prof-role-display">-</span> &nbsp;&middot;&nbsp; <span id="prof-booth-display">-</span>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="ii-label">&#128241; No. HP</div>
+                  <div class="ii-val" id="prof-phone-display">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="ii-label">&#128231; Email</div>
+                  <div class="ii-val" id="prof-email-display" style="font-size:12px">-</div>
+                </div>
+                <div class="info-item" style="grid-column:1/-1">
+                  <div class="ii-label">&#128205; Alamat</div>
+                  <div class="ii-val" id="prof-address-display">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="ii-label">&#128100; Username</div>
+                  <div class="ii-val" id="prof-username-display">-</div>
+                </div>
+                <div class="info-item">
+                  <div class="ii-label">&#128197; Bergabung</div>
+                  <div class="ii-val" id="prof-join-display">-</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="switchProfileTab('edit-info')">Edit Informasi</button>
+              <button class="tab-btn" onclick="switchProfileTab('change-pass')">Ganti Password</button>
+            </div>
+            <div class="tab-panel active" id="ptab-edit-info">
+              <div class="card">
+                <div class="card-header"><h3>Informasi Pribadi</h3></div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-field"><label>Nama Lengkap</label><input type="text" id="pe-name" placeholder="Nama lengkap" /></div>
+                    <div class="form-field"><label>Email</label><input type="email" id="pe-email" placeholder="email@contoh.com" /></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-field"><label>No. HP / WhatsApp</label><input type="tel" id="pe-phone" placeholder="08xxxxxxxxxx" /></div>
+                    <div class="form-field"><label>Username</label><input type="text" id="pe-username" placeholder="username unik" /></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-field"><label>Alamat Lengkap</label><input type="text" id="pe-address" placeholder="Jl. Contoh No. 1, Kota" /></div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+                    <button class="btn btn-primary" onclick="saveProfileInfo()">Simpan Perubahan</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-panel" id="ptab-change-pass">
+              <div class="card">
+                <div class="card-header"><h3>Ganti Password</h3></div>
+                <div class="card-body">
+                  <div class="form-row">
+                    <div class="form-field"><label>Password Saat Ini</label><input type="password" id="cp-current" placeholder="Password lama" /></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-field">
+                      <label>Password Baru</label>
+                      <input type="password" id="cp-new" placeholder="Min. 6 karakter" oninput="checkPassStrength(this.value)" />
+                      <div class="pass-strength"><div class="pass-strength-bar" id="pass-strength-bar"></div></div>
+                      <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="pass-strength-label"></div>
+                    </div>
+                    <div class="form-field"><label>Konfirmasi Password Baru</label><input type="password" id="cp-confirm" placeholder="Ulangi password baru" /></div>
+                  </div>
+                  <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+                    <button class="btn btn-primary" onclick="doChangePassword()">Ganti Password</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- MY STOCK (STAFF) -->
       <div class="page-section" id="sec-my-stock">
         <div class="page-header">
@@ -563,10 +709,85 @@ tr:hover td{background:var(--gray-50)}
   </div>
 </div>
 
-<!-- Add Staff -->
+<!-- Add / Edit User Modal -->
+<div class="modal-overlay hidden" id="modal-add-user">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="modal-user-title">Tambah User Baru</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="nu-id" value="" />
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">Informasi Akun</div>
+      <div class="form-row">
+        <div class="form-field"><label>Nama Lengkap *</label><input type="text" id="nu-name" placeholder="contoh: Andi Prasetyo" /></div>
+        <div class="form-field"><label>Username *</label><input type="text" id="nu-user" placeholder="username unik" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Password *</label><input type="password" id="nu-pass" placeholder="Min. 6 karakter" oninput="checkPassStrengthNew(this.value)" /></div>
+        <div class="form-field">
+          <label>Peran *</label>
+          <select id="nu-role" onchange="toggleBoothField()">
+            <option value="staff">Karyawan</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" id="nu-booth-wrap">
+        <div class="form-field"><label>Booth *</label><select id="nu-booth"></select></div>
+      </div>
+      <div class="pass-strength" style="margin-bottom:.75rem"><div class="pass-strength-bar" id="pass-strength-bar-new"></div></div>
+      <div class="sep"></div>
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">Informasi Pribadi</div>
+      <div class="form-row">
+        <div class="form-field"><label>No. HP / WhatsApp</label><input type="tel" id="nu-phone" placeholder="08xxxxxxxxxx" /></div>
+        <div class="form-field"><label>Email</label><input type="email" id="nu-email" placeholder="email@contoh.com" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Alamat Lengkap</label><input type="text" id="nu-address" placeholder="Jl. Contoh No. 1, Kota" /></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-user')">Batal</button>
+      <button class="btn btn-primary" id="btn-save-user" onclick="saveUser()">Simpan User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password (Admin resets other user's password) -->
+<div class="modal-overlay hidden" id="modal-reset-pass">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <h3>Reset Password</h3>
+      <button class="modal-close" onclick="closeModal('modal-reset-pass')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:14px;color:var(--text-secondary);margin-bottom:1rem">
+        Reset password untuk: <strong id="rp-username-label">-</strong>
+      </div>
+      <input type="hidden" id="rp-uid" />
+      <div class="form-field" style="margin-bottom:1rem">
+        <label>Password Baru *</label>
+        <input type="password" id="rp-new" placeholder="Min. 6 karakter" oninput="checkPassStrengthReset(this.value)" />
+        <div class="pass-strength" style="margin-top:6px"><div class="pass-strength-bar" id="pass-strength-bar-reset"></div></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="pass-strength-label-reset"></div>
+      </div>
+      <div class="form-field">
+        <label>Konfirmasi Password Baru *</label>
+        <input type="password" id="rp-confirm" placeholder="Ulangi password baru" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset-pass')">Batal</button>
+      <button class="btn btn-primary" onclick="doResetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Staff (legacy, kept for compatibility - hidden, replaced by modal-add-user) -->
 <div class="modal-overlay hidden" id="modal-add-staff">
   <div class="modal-box">
-    <div class="modal-header"><h3>Tambah Karyawan</h3><button class="modal-close" onclick="closeModal('modal-add-staff')">✕</button></div>
+    <div class="modal-header"><h3>Tambah Karyawan</h3><button class="modal-close" onclick="closeModal('modal-add-staff')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="form-row">
         <div class="form-field"><label>Nama Lengkap</label><input type="text" id="ns-name" /></div>
@@ -677,10 +898,10 @@ let cart = [];
 
 const state = {
   users: [
-    { id:1, name:'Administrator', username:'admin', password:'admin123', role:'admin', boothId:null },
-    { id:2, name:'Siti Rahayu', username:'booth1', password:'pass123', role:'staff', boothId:1 },
-    { id:3, name:'Budi Santoso', username:'booth2', password:'pass123', role:'staff', boothId:2 },
-    { id:4, name:'Dewi Puspita', username:'booth3', password:'pass123', role:'staff', boothId:3 },
+    { id:1, name:'Administrator', username:'admin', password:'admin123', role:'admin', boothId:null, phone:'081234567890', address:'Jl. Merdeka No. 1, Kota', email:'admin@apheliontea.id', joinDate:'2024-01-01', active:true },
+    { id:2, name:'Siti Rahayu', username:'booth1', password:'pass123', role:'staff', boothId:1, phone:'082233445566', address:'Jl. Melati No. 12, Pasuruan', email:'siti@apheliontea.id', joinDate:'2024-03-15', active:true },
+    { id:3, name:'Budi Santoso', username:'booth2', password:'pass123', role:'staff', boothId:2, phone:'083344556677', address:'Jl. Anggrek No. 5, Pasuruan', email:'budi@apheliontea.id', joinDate:'2024-03-20', active:true },
+    { id:4, name:'Dewi Puspita', username:'booth3', password:'pass123', role:'staff', boothId:3, phone:'084455667788', address:'Jl. Mawar No. 8, Pasuruan', email:'dewi@apheliontea.id', joinDate:'2024-04-01', active:true },
   ],
   booths: [
     { id:1, name:'Booth Alun-alun', location:'Alun-alun Kota', pic:'Siti Rahayu', active:true },
@@ -821,6 +1042,8 @@ function navTo(page) {
     report: renderReport,
     'my-stock': renderMyStock,
     'my-sales': renderMySales,
+    users: renderUsers,
+    profile: renderProfile,
   };
   if (renders[page]) renders[page]();
 }
@@ -1066,33 +1289,32 @@ function renderStaff() {
   tbody.innerHTML = state.users.map((u,i)=>`
     <tr>
       <td>${i+1}</td>
-      <td>${u.name}</td>
+      <td>
+        <div style="font-weight:500">${u.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${u.phone||'—'}</div>
+      </td>
       <td><code style="background:var(--gray-100);padding:2px 8px;border-radius:6px;font-size:12px">${u.username}</code></td>
       <td>${u.boothId?getBoothById(u.boothId)?.name:'—'}</td>
       <td><span class="badge ${u.role==='admin'?'badge-amber':'badge-blue'}">${u.role==='admin'?'Admin':'Karyawan'}</span></td>
       <td><span class="badge badge-green">Aktif</span></td>
-      <td>${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="removeStaff(${u.id})">Hapus</button>`:''}</td>
+      <td>
+        <div class="flex" style="gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditUserModal(${u.id})">✏️ Edit</button>
+          <button class="btn btn-amber btn-sm" onclick="openResetPassModal(${u.id})">🔑 Reset</button>
+          ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Hapus</button>`:''}
+        </div>
+      </td>
     </tr>`).join('');
 }
 
 function addStaff() {
-  const name=document.getElementById('ns-name').value.trim();
-  const user=document.getElementById('ns-user').value.trim();
-  const pass=document.getElementById('ns-pass').value.trim();
-  const boothId=Number(document.getElementById('ns-booth').value);
-  if (!name||!user||!pass||!boothId) { toast('Lengkapi semua field!','error'); return; }
-  if (state.users.find(u=>u.username===user)) { toast('Username sudah digunakan!','error'); return; }
-  state.users.push({ id:state.nextUserId++, name, username:user, password:pass, role:'staff', boothId, active:true });
+  // Delegate to the new user modal for consistency
+  openAddUserModal();
   closeModal('modal-add-staff');
-  ['ns-name','ns-user','ns-pass'].forEach(id=>document.getElementById(id).value='');
-  toast('Karyawan berhasil ditambahkan!');
-  renderStaff();
 }
 
 function removeStaff(id) {
-  state.users = state.users.filter(u=>u.id!==id);
-  toast('Karyawan dihapus.');
-  renderStaff();
+  deleteUser(id);
 }
 
 // ===== STOCK =====
@@ -1359,6 +1581,268 @@ function renderMySales() {
 
 // Init cash input visibility
 document.getElementById('cash-input-area') && (document.getElementById('cash-input-area').style.display='block');
+
+// ===== USER MANAGEMENT =====
+let userTabFilter = 'all';
+
+function renderUsers() {
+  const container = document.getElementById('user-cards-container');
+  const avatarColors = ['#2DBF87','#5B8DEF','#F4C233','#F06B5B','#9FE1CB','#AFA9EC'];
+  let users = state.users;
+  if (userTabFilter === 'admin') users = users.filter(u=>u.role==='admin');
+  if (userTabFilter === 'staff') users = users.filter(u=>u.role==='staff');
+  container.innerHTML = users.map((u,i)=>{
+    const booth = u.boothId ? getBoothById(u.boothId)?.name : '—';
+    const color = avatarColors[u.id % avatarColors.length];
+    const isCurrentUser = currentUser && u.id === currentUser.id;
+    return `<div class="user-card">
+      <div class="uc-avatar" style="background:${color}">${u.name.charAt(0).toUpperCase()}</div>
+      <div class="uc-info">
+        <div class="uc-name">${u.name} ${isCurrentUser?'<span class="badge badge-green" style="font-size:10px;padding:1px 6px">Kamu</span>':''}</div>
+        <div class="uc-meta">
+          <span class="badge ${u.role==='admin'?'badge-amber':'badge-blue'}" style="font-size:10px;padding:2px 7px">${u.role==='admin'?'Admin':'Karyawan'}</span>
+          &nbsp;@${u.username}&nbsp;·&nbsp;${booth}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+          ${u.phone||'—'} &nbsp;·&nbsp; ${u.email||'—'}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          📍 ${u.address||'Alamat belum diisi'}
+        </div>
+      </div>
+      <div class="uc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditUserModal(${u.id})" title="Edit">✏️</button>
+        <button class="btn btn-amber btn-sm" onclick="openResetPassModal(${u.id})" title="Reset Password">🔑</button>
+        ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})" title="Hapus">🗑</button>`:''}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text-muted);font-size:14px;padding:1.5rem">Tidak ada user ditemukan.</div>';
+}
+
+function switchUserTab(filter) {
+  userTabFilter = filter;
+  document.querySelectorAll('#user-tab-bar .tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['all','admin','staff'][i]===filter);
+  });
+  renderUsers();
+}
+
+function openAddUserModal() {
+  document.getElementById('modal-user-title').textContent = 'Tambah User Baru';
+  document.getElementById('btn-save-user').textContent = 'Simpan User';
+  document.getElementById('nu-id').value = '';
+  ['nu-name','nu-user','nu-pass','nu-phone','nu-email','nu-address'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('nu-role').value = 'staff';
+  document.getElementById('nu-booth-wrap').style.display = '';
+  document.getElementById('pass-strength-bar-new').style.width = '0';
+  // Populate booth select
+  const boothOpts = state.booths.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('nu-booth').innerHTML = '<option value="">Pilih booth</option>' + boothOpts;
+  openModal('modal-add-user');
+}
+
+function openEditUserModal(id) {
+  const u = state.users.find(x=>x.id===id);
+  if (!u) return;
+  document.getElementById('modal-user-title').textContent = 'Edit User';
+  document.getElementById('btn-save-user').textContent = 'Simpan Perubahan';
+  document.getElementById('nu-id').value = u.id;
+  document.getElementById('nu-name').value = u.name || '';
+  document.getElementById('nu-user').value = u.username || '';
+  document.getElementById('nu-pass').value = '';
+  document.getElementById('nu-role').value = u.role || 'staff';
+  document.getElementById('nu-phone').value = u.phone || '';
+  document.getElementById('nu-email').value = u.email || '';
+  document.getElementById('nu-address').value = u.address || '';
+  // Booth
+  const boothOpts = state.booths.map(b=>`<option value="${b.id}" ${b.id===u.boothId?'selected':''}>${b.name}</option>`).join('');
+  document.getElementById('nu-booth').innerHTML = '<option value="">Pilih booth</option>' + boothOpts;
+  document.getElementById('nu-booth-wrap').style.display = u.role==='admin' ? 'none' : '';
+  document.getElementById('pass-strength-bar-new').style.width = '0';
+  openModal('modal-add-user');
+}
+
+function toggleBoothField() {
+  const role = document.getElementById('nu-role').value;
+  document.getElementById('nu-booth-wrap').style.display = role==='admin' ? 'none' : '';
+}
+
+function saveUser() {
+  const editId = document.getElementById('nu-id').value;
+  const name = document.getElementById('nu-name').value.trim();
+  const username = document.getElementById('nu-user').value.trim().toLowerCase();
+  const pass = document.getElementById('nu-pass').value.trim();
+  const role = document.getElementById('nu-role').value;
+  const boothId = role==='admin' ? null : Number(document.getElementById('nu-booth').value);
+  const phone = document.getElementById('nu-phone').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const address = document.getElementById('nu-address').value.trim();
+
+  if (!name || !username) { toast('Nama dan username wajib diisi!','error'); return; }
+  if (role==='staff' && !boothId) { toast('Pilih booth untuk karyawan!','error'); return; }
+
+  if (editId) {
+    // Edit mode
+    const u = state.users.find(x=>x.id===Number(editId));
+    if (!u) return;
+    const dup = state.users.find(x=>x.username===username && x.id!==Number(editId));
+    if (dup) { toast('Username sudah digunakan!','error'); return; }
+    u.name = name; u.username = username; u.role = role; u.boothId = boothId;
+    u.phone = phone; u.email = email; u.address = address;
+    if (pass) { if(pass.length<6){toast('Password min. 6 karakter!','error');return;} u.password=pass; }
+    toast('Data user berhasil diperbarui!');
+    // sync currentUser if editing self
+    if (currentUser && currentUser.id===u.id) {
+      currentUser = u;
+      document.getElementById('topbar-name').textContent = u.name;
+      document.getElementById('topbar-avatar').textContent = u.name.charAt(0).toUpperCase();
+    }
+  } else {
+    // Add mode
+    if (!pass || pass.length < 6) { toast('Password min. 6 karakter!','error'); return; }
+    if (state.users.find(x=>x.username===username)) { toast('Username sudah digunakan!','error'); return; }
+    const today = new Date().toISOString().split('T')[0];
+    state.users.push({ id:state.nextUserId++, name, username, password:pass, role, boothId, phone, email, address, joinDate:today, active:true });
+    toast('User baru berhasil ditambahkan!');
+  }
+
+  closeModal('modal-add-user');
+  renderUsers();
+  renderStaff();
+  setupUI();
+}
+
+function deleteUser(id) {
+  if (currentUser && currentUser.id===id) { toast('Tidak bisa menghapus akun yang sedang login!','error'); return; }
+  state.users = state.users.filter(u=>u.id!==id);
+  toast('User berhasil dihapus.');
+  renderUsers();
+  renderStaff();
+}
+
+function openResetPassModal(id) {
+  const u = state.users.find(x=>x.id===id);
+  if (!u) return;
+  document.getElementById('rp-uid').value = u.id;
+  document.getElementById('rp-username-label').textContent = u.name + ' (@' + u.username + ')';
+  document.getElementById('rp-new').value = '';
+  document.getElementById('rp-confirm').value = '';
+  document.getElementById('pass-strength-bar-reset').style.width='0';
+  document.getElementById('pass-strength-label-reset').textContent='';
+  openModal('modal-reset-pass');
+}
+
+function doResetPassword() {
+  const uid = Number(document.getElementById('rp-uid').value);
+  const newPass = document.getElementById('rp-new').value.trim();
+  const confirm = document.getElementById('rp-confirm').value.trim();
+  if (!newPass || newPass.length<6) { toast('Password min. 6 karakter!','error'); return; }
+  if (newPass !== confirm) { toast('Konfirmasi password tidak cocok!','error'); return; }
+  const u = state.users.find(x=>x.id===uid);
+  if (!u) return;
+  u.password = newPass;
+  toast('Password berhasil direset!');
+  closeModal('modal-reset-pass');
+}
+
+function checkPassStrengthNew(val) { _checkPassStrength(val,'pass-strength-bar-new',null); }
+function checkPassStrengthReset(val) { _checkPassStrength(val,'pass-strength-bar-reset','pass-strength-label-reset'); }
+function checkPassStrength(val) { _checkPassStrength(val,'pass-strength-bar','pass-strength-label'); }
+
+function _checkPassStrength(val,barId,labelId) {
+  const bar = document.getElementById(barId);
+  const label = labelId ? document.getElementById(labelId) : null;
+  if (!bar) return;
+  let score=0;
+  if (val.length>=6) score++;
+  if (val.length>=10) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^a-zA-Z0-9]/.test(val)) score++;
+  const pct = Math.min(score/5*100,100);
+  const colors = ['','#F06B5B','#F4C233','#F4C233','#2DBF87','#0F6E56'];
+  const labels = ['','Sangat Lemah','Lemah','Cukup','Kuat','Sangat Kuat'];
+  bar.style.width = pct+'%';
+  bar.style.background = colors[score]||'var(--gray-200)';
+  if (label) label.textContent = val.length ? labels[score]||'' : '';
+}
+
+// ===== PROFILE PAGE =====
+function renderProfile() {
+  const u = currentUser;
+  if (!u) return;
+  const booth = u.boothId ? getBoothById(u.boothId)?.name : 'Admin Pusat';
+  const avatarColors = ['#2DBF87','#5B8DEF','#F4C233','#F06B5B'];
+  const color = avatarColors[u.id % avatarColors.length];
+  const avatarEl = document.getElementById('prof-avatar-lg');
+  avatarEl.textContent = u.name.charAt(0).toUpperCase();
+  avatarEl.style.background = color;
+  document.getElementById('prof-name-display').textContent = u.name;
+  document.getElementById('prof-role-display').textContent = u.role==='admin' ? 'Admin' : 'Karyawan';
+  document.getElementById('prof-booth-display').textContent = booth;
+  document.getElementById('prof-phone-display').textContent = u.phone || 'Belum diisi';
+  document.getElementById('prof-email-display').textContent = u.email || 'Belum diisi';
+  document.getElementById('prof-address-display').textContent = u.address || 'Belum diisi';
+  document.getElementById('prof-username-display').textContent = '@' + u.username;
+  document.getElementById('prof-join-display').textContent = u.joinDate || '-';
+  // Fill edit fields
+  document.getElementById('pe-name').value = u.name || '';
+  document.getElementById('pe-email').value = u.email || '';
+  document.getElementById('pe-phone').value = u.phone || '';
+  document.getElementById('pe-username').value = u.username || '';
+  document.getElementById('pe-address').value = u.address || '';
+  // Clear password fields
+  ['cp-current','cp-new','cp-confirm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  if (document.getElementById('pass-strength-bar')) document.getElementById('pass-strength-bar').style.width='0';
+  if (document.getElementById('pass-strength-label')) document.getElementById('pass-strength-label').textContent='';
+}
+
+function switchProfileTab(tab) {
+  document.querySelectorAll('#sec-profile .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#sec-profile .tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('ptab-'+tab).classList.add('active');
+  // activate the correct tab button
+  document.querySelectorAll('#sec-profile .tab-btn').forEach(b=>{
+    if (b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+tab+"'")) b.classList.add('active');
+  });
+}
+
+function saveProfileInfo() {
+  const name = document.getElementById('pe-name').value.trim();
+  const email = document.getElementById('pe-email').value.trim();
+  const phone = document.getElementById('pe-phone').value.trim();
+  const username = document.getElementById('pe-username').value.trim().toLowerCase();
+  const address = document.getElementById('pe-address').value.trim();
+  if (!name || !username) { toast('Nama dan username wajib diisi!','error'); return; }
+  const dup = state.users.find(u=>u.username===username && u.id!==currentUser.id);
+  if (dup) { toast('Username sudah digunakan user lain!','error'); return; }
+  const u = state.users.find(x=>x.id===currentUser.id);
+  if (!u) return;
+  u.name=name; u.email=email; u.phone=phone; u.username=username; u.address=address;
+  currentUser = u;
+  document.getElementById('topbar-name').textContent = name;
+  document.getElementById('topbar-avatar').textContent = name.charAt(0).toUpperCase();
+  toast('Profil berhasil diperbarui!');
+  renderProfile();
+}
+
+function doChangePassword() {
+  const current = document.getElementById('cp-current').value.trim();
+  const newPass = document.getElementById('cp-new').value.trim();
+  const confirm = document.getElementById('cp-confirm').value.trim();
+  const u = state.users.find(x=>x.id===currentUser.id);
+  if (!u) return;
+  if (current !== u.password) { toast('Password saat ini salah!','error'); return; }
+  if (!newPass || newPass.length<6) { toast('Password baru min. 6 karakter!','error'); return; }
+  if (newPass !== confirm) { toast('Konfirmasi password tidak cocok!','error'); return; }
+  u.password = newPass;
+  toast('Password berhasil diubah!');
+  ['cp-current','cp-new','cp-confirm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  if (document.getElementById('pass-strength-bar')) document.getElementById('pass-strength-bar').style.width='0';
+  if (document.getElementById('pass-strength-label')) document.getElementById('pass-strength-label').textContent='';
+}
 </script>
 </body>
 </html>
